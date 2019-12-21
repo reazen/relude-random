@@ -1,0 +1,19 @@
+{
+  "name": "relude-random",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "bsb -make-world",
+    "start": "bsb -make-world -w",
+    "clean": "bsb -clean-world"
+  },
+  "keywords": [
+    "BuckleScript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "bs-abstract": "^0.18.0",
+    "bs-platform": "^7.0.1",
+    "relude": "^0.46.0"
+  }
+}
