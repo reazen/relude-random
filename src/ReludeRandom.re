@@ -8,7 +8,7 @@ module Bitwise = {
   let and_ = (a, b) => a land b;
   let or_ = (a, b) => a lor b;
   let xor = (a, b) => a lxor b;
-  let shiftRightZeroFill = (a, b) => a lsr b;
+  let shiftRightZeroFill = (a, b) => b lsr a;
 };
 
 module Seed = {
@@ -17,12 +17,16 @@ module Seed = {
 
   // produce the next seed, given a current seed
   let next = (Seed(state0, inc)) =>
-    Seed(0 lsr (state0 * 1664525 + inc), inc);
+    Seed((state0 * 1664525 + inc) lsr 0, inc);
 
   // produce a pseudorandom int from a seed
   let peel = (Seed(state, _)) => {
-    let word = 277803737 * (state lxor (28 lsr state + 4) lsr state);
-    0 lsr (22 lsr word lxor word);
+    let vshift = Bitwise.shiftRightZeroFill(state lsr 28 + 4, state);
+    let word = state lxor vshift * 277803737;
+    let shift22 = Bitwise.shiftRightZeroFill(22, word);
+    Bitwise.shiftRightZeroFill(0, shift22 lxor word);
+    // let word = 277803737 * (state lxor state lsr (state + 4 lsr 28));
+    // (word lsr 22 lxor word) lsr 0;
   };
 
   /**
@@ -39,7 +43,7 @@ module Seed = {
    */
   let fromInt = x => {
     let Seed(state1, inc) = next(Seed(0, 1013904223));
-    let state2 = 0 lsr (state1 + x);
+    let state2 = (state1 + x) lsr 0;
     next(Seed(state2, inc));
   };
 
@@ -124,13 +128,12 @@ module Generator = {
 
         // fast path for power of 2
         if ((range - 1) land range == 0) {
-          let value = 0 lsr ((range - 1) land Seed.peel(seed0)) + lo;
-          (value, Seed.next(seed0));
+          let value = (range - 1) land Seed.peel(seed0) lsr 0;
+          (value + lo, Seed.next(seed0));
         } else {
           // `mod` in OCaml works similarly to `remainderBy` in Elm... this is
           // important when negative numbers get involved: `-5 mod 4 == -1`
-          let remainder = range mod 0 lsr (0 - range);
-          let threshold = 0 lsr remainder;
+          let threshold = (- range lsr 0 mod range) lsr 0;
 
           // recursively ensure the seed is within our threshold, but in
           // practice this almost never recurses
@@ -138,7 +141,7 @@ module Generator = {
             let x = Seed.peel(seed);
             let seedN = Seed.next(seed);
             x < threshold
-              ? accountForBias(seedN) : (range mod (x + lo), seedN);
+              ? accountForBias(seedN) : (x mod range + lo, seedN);
           };
           accountForBias(seed0);
         };

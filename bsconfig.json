@@ -1,10 +1,17 @@
 {
   "name": "relude-random",
   "version": "0.1.0",
-  "sources": {
-    "dir": "src",
-    "subdirs": true
-  },
+  "sources": [
+    {
+      "dir": "src",
+      "subdirs": true
+    },
+    {
+      "dir": "test",
+      "subdirs": true,
+      "type": "dev"
+    }
+  ],
   "package-specs": {
     "module": "commonjs",
     "in-source": true
@@ -13,6 +20,9 @@
   "bs-dependencies": [
     "bs-abstract",
     "relude"
+  ],
+  "bs-dev-dependencies": [
+    "@glennsl/bs-jest"
   ],
   "warnings": {
     "error": "+101"
