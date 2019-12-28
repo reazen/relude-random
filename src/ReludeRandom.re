@@ -90,6 +90,27 @@ module Generator = {
       );
 
   /**
+   * Construct a Generator that always returns the same value, by providing that
+   * value.
+   */
+  let pure: 'a. 'a => t('a) = a => Generator(seed => (a, seed));
+
+  /**
+   * Chain together multiple generators. This is useful when constructing a
+   * generator relies on the output of a previous generator, for example
+   * building a list generator of a random length.
+   */
+  let flatMap: 'a 'b. ('a => t('b), t('a)) => t('b) =
+    (f, Generator(genA)) =>
+      Generator(
+        seed0 => {
+          let (a, seed1) = genA(seed0);
+          let Generator(genB) = f(a);
+          genB(seed1);
+        },
+      );
+
+  /**
    * Construct a generator for floating point numbers between some min and max.
    *
    * ```reason
@@ -161,4 +182,39 @@ module RandomInt = {
   let greaterThan = n => inRange(~min=n + 1, ~max=max_int);
 
   let lessThan = n => inRange(~min=min_int, ~max=n - 1);
+};
+
+module RandomList = {
+  let rec listHelp:
+    (list('a), int, Seed.t => ('a, Seed.t), Seed.t) => (list('a), Seed.t) =
+    (acc, n, gen, seed) =>
+      if (n < 1) {
+        (acc, seed);
+      } else {
+        let (value, newSeed) = gen(seed);
+        listHelp([value, ...acc], n - 1, gen, newSeed);
+      };
+
+  /**
+   * Construct a list with random values, using the provided generator. The
+   * length is fixed using the provided `length` parameter. Negative lengths
+   * will result in empty lists.
+   *
+   * ```reason
+   * // e.g. ([912324, 7, 4114674, 12], seed)
+   * let (myValue, nextSeed) =
+   *   RandomList.make(~length=4, RandomInt.anyPositive)
+   *   |> Generator.run(_, someSeed);
+   */
+  let make = (~length: int, Generator.Generator(gen)) =>
+    Generator.Generator(seed => listHelp([], length, gen, seed));
+
+  /**
+   * Construct a list with random values using the provided generator, with a
+   * random length between the provided min and max. If the minLength is less
+   * than 0, it will be clamped to 0 before choosing the length
+   */
+  let makeRandomLength = (~minLength: int, ~maxLength: int, gen) =>
+    Generator.int(~min=Int.max(minLength, 0), ~max=maxLength)
+    |> Generator.flatMap(length => make(~length, gen));
 };
