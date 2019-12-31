@@ -32,11 +32,11 @@ Instead of _true_ randomness, we opt for _generators_ that can be run with a _se
 
 - When generating random values in a range, each possible value is equally likely to occur
 - The next value from a generator can't be easily predicted, unless you know both the implementation details and the seed
-- Patterns are unlikely to emerge
+- Sequences of random values are extremely unlikely to repeat
 
 ### Generators
 
-A generator is a data structure (`Generator.t('a)`) that represents the ability to produce random values of some type `'a`. To run one, you call `Generator.run` with a generator and a seed (see below). `run` returns a value of type `'a` and a new seed, to be used with your next call to `Generator.run`.
+A `Generator.t('a)` is a type that represents the ability to produce random values of some type `'a`. To run one, you call `Generator.run` with a generator and a seed (see below). `run` returns a value of type `'a` and a new seed, to be used with your next call to `Generator.run`.
 
 In addition to `run`, generators can also be constructed via functions like `RandomInt.make(~min=30, ~max=50)` (which returns a `Generator.t(int)`).
 
@@ -45,7 +45,7 @@ Generators can also be composed using functions like `map` and `flatMap`, for ex
 ```reason
 open ReludeRandom;
 
-// Here we map an int gnereator into a bool generator, but the
+// Here we map an int generator into a bool generator, but the
 // output boolean is weighted to produce `false` ~70% of the time
 let myBoolGenerator =
   RandomInt.make(~min=1, ~max=100)
@@ -54,7 +54,7 @@ let myBoolGenerator =
 
 ### Seeds
 
-In order to run a generator and actually get a value out, you need to construct a seed. This can be as simple as `ReludeRandom.Seed.fromInt(42)`. Constructing a seed this way will cause your generators to always produce the same sequence of values, across runs.
+In order to run a generator and actually get a value out, you need to construct a seed. This can be as simple as `ReludeRandom.Seed.fromInt(42)`. Constructing a seed this way will cause your generators to always produce the same values, in the same order, across runs.
 
 While producing the same sequence of values can be useful for testing, if you're looking for randomness, it's probably because you want your application to behave differently each time it's run. In order to do this, you should construct a seed as a side-effect, based on an `int` that is constantly changing, such as the current time.
 
@@ -64,6 +64,12 @@ The need to produce a different seed each run is common enough that we provide `
 
 While the implementation of the algorithm is basically a direct port from Elm, there are a few key differences in usage:
 
-- Elm has a couple different ways to get a value from a generator. One is more tightly integrated with the Elm Architecture (producing a `Cmd msg`), which doesn't make as much sense in our context. Instead we only have the equivalent of `step`, which we name `Generator.run`.
-- Some functions were renamed for consistency with the Relude ecosystem, (e.g. `constant` is `pure` and `andThen` is `flatMap`)
+- Integers in Elm match the range of JS numbers (2^53), while Bucklescript ensures ints are 32-bit. This difference means that the bit-shifting that forms the foundation of this library won't produce identical values to the Elm version, even when run with the same seed.
+- Elm has a couple different ways to get a value from a generator. One is more tightly integrated with the Elm Architecture (producing a `Cmd msg`), which doesn't make as much sense in our context. Instead we only have the equivalent of Elm's `step` function, which we've named `Generator.run`.
 - The official Elm library provides most of the core pieces, while useful "extra" functions live in [a separate elm-community project](https://package.elm-lang.org/packages/elm-community/random-extra/latest). We're in the process of adding many of those directly to Relude Random.
+- Types and functions were renamed for consistency with the Relude ecosystem
+  - Generator and Seed types live in their own modules (as Generator.t and Seed.t)
+  - `Random.initialSeed` is `Seed.fromInt`
+  - `Random.constant` is `Generator.pure`
+  - `Random.andThen` is `Generator.flatMap`
+  - `Random.step` is `Generator.run`
