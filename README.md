@@ -1,6 +1,6 @@
 # Relude Random
 
-Generate pseudo-random values in ReasonML (in a way that is reproducible and free from side effects). This library implements [this paper](http://www.pcg-random.org/paper.html), and is largely a port of [elm/random](https://package.elm-lang.org/packages/elm-community/random-extra/latest).
+Generate pseudo-random values in ReasonML (in a way that is reproducible and free from side effects). This library implements [this paper](http://www.pcg-random.org/paper.html), and is largely a port of [elm/random](https://package.elm-lang.org/packages/elm/random/latest/).
 
 ## Installation
 
@@ -20,8 +20,7 @@ Note that `relude-random` has peer-dependencies on `relude` and `bs-abstract`, b
     "bs-abstract",
     "relude",
     "relude-random"
-  ],
-  // ...
+  ]
 }
 ```
 

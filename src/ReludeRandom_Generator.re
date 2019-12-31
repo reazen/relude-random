@@ -13,6 +13,15 @@ let map = (f, Generator(genA)) =>
     },
   );
 
+let apply = (Generator(genF), Generator(genA)) =>
+  Generator(
+    seed0 => {
+      let (f, seed1) = genF(seed0);
+      let (a, seed2) = genA(seed1);
+      (f(a), seed2);
+    },
+  );
+
 let pure = a => Generator(seed => (a, seed));
 
 let flatMap = (f, Generator(genA)) =>
@@ -73,3 +82,27 @@ let int = (~min: int, ~max: int): t(int) =>
       };
     },
   );
+
+module Functor = {
+  type nonrec t('a) = t('a);
+  let map = map;
+};
+
+module Apply = {
+  include Functor;
+  let apply = apply;
+};
+
+module Applicative = {
+  include Apply;
+  let pure = pure;
+};
+
+module Monad = {
+  include Applicative;
+  let flat_map = (a, f) => flatMap(f, a);
+};
+
+include Relude.Extensions.Functor.FunctorExtensions(Functor);
+include Relude.Extensions.Apply.ApplyExtensions(Apply);
+include Relude.Extensions.Monad.MonadExtensions(Monad);
