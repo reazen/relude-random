@@ -10,7 +10,7 @@ Generate pseudo-random values in ReasonML (in a way that is reproducible and fre
 npm install --save relude-random
 ```
 
-Note that `relude-random` has peer-dependencies on `relude` and `bs-abstract`, both of which can also be instlled from npm if your project doesn't already use them.
+Note that `relude-random` has peer-dependencies on `relude` and `bs-abstract`, both of which can also be installed from npm if your project doesn't already use them.
 
 **Update your bsconfig.json**
 
@@ -37,9 +37,9 @@ Instead of _true_ randomness, we opt for _generators_ that can be run with a _se
 
 ### Generators
 
-A generator is a data structure (`Generator.t('a))` that represents the ability to produce random values of some type `'a`. To run one, you call `Generator.run` with a generator and a seed (see below). `run` returns a value of type `'a` and a new seed, to be used with your next call to `Generator.run`.
+A generator is a data structure (`Generator.t('a)`) that represents the ability to produce random values of some type `'a`. To run one, you call `Generator.run` with a generator and a seed (see below). `run` returns a value of type `'a` and a new seed, to be used with your next call to `Generator.run`.
 
-In addition be being `run`, generators can also be constructed via functions like `RandomInt.make(~min=30, ~max=50)` (which returns a `Generator.t(int)`).
+In addition to `run`, generators can also be constructed via functions like `RandomInt.make(~min=30, ~max=50)` (which returns a `Generator.t(int)`).
 
 Generators can also be composed using functions like `map` and `flatMap`, for example:
 
