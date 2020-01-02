@@ -1,3 +1,5 @@
+open Relude.Globals;
+
 module Seed = ReludeRandom_Seed;
 
 type t('a) =
@@ -82,6 +84,20 @@ let int = (~min: int, ~max: int): t(int) =>
       };
     },
   );
+
+let weighted = (first, rest) => {
+  let normalize = ((weight, _)) => abs_float(weight);
+  let total = normalize(first) +. List.Float.sum(List.map(normalize, rest));
+
+  let rec getByWeight = ((weight, value), rest, countdown) =>
+    switch (rest) {
+    | [x, ...xs] when countdown > abs_float(weight) =>
+      getByWeight(x, xs, countdown -. abs_float(weight))
+    | _ => value
+    };
+
+  float(~min=0.0, ~max=total) |> map(getByWeight(first, rest));
+};
 
 module Functor = {
   type nonrec t('a) = t('a);

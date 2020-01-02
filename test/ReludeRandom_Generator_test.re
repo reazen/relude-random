@@ -4,6 +4,21 @@ open Expect;
 open Relude.Globals;
 open ReludeRandom;
 
+type weekday =
+  | Sun
+  | Mon
+  | Tue
+  | Wed
+  | Thu
+  | Fri
+  | Sat;
+
+module WeekdayOrd = {
+  type t = weekday;
+  let eq = (a: t, b: t) => a == b;
+  let compare = (a: t, b: t) => compare(a, b) |> Relude.Ordering.fromInt;
+};
+
 // describe("Seed", () => {
 //   test("construct a seed", () => {
 //     let v = Seed.fromInt(42);
@@ -65,15 +80,16 @@ describe("RandomList", () => {
   );
 
   let collectCounts =
+      (type a, ord: (module BsAbstract.Interface.ORD with type t = a), xs) => {
+    module Ord = (val ord);
+    module M = Relude.Map.WithOrd(Ord);
     List.foldLeft(
-      (acc, x) =>
-        Int.Map.set(
-          x,
-          Option.fold(1, v => v + 1, Int.Map.get(x, acc)),
-          acc,
-        ),
-      Relude.Int.Map.make(),
-    );
+      (acc, x) => M.(set(x, Option.fold(1, v => v + 1, get(x, acc)), acc)),
+      M.make(),
+      xs,
+    )
+    |> M.toList;
+  };
 
   test("values are distributed evenly", () => {
     let seed = Seed.fromInt(987654);
@@ -81,8 +97,7 @@ describe("RandomList", () => {
     RandomList.make(~length=60000, diceGen)
     |> Generator.run(_, seed)
     |> fst
-    |> collectCounts
-    |> Int.Map.toList
+    |> collectCounts((module Int.Ord))
     |> expect
     |> toEqual([
          (1, 10087),
@@ -100,8 +115,7 @@ describe("RandomList", () => {
     RandomList.make(~length=60000, diceGen)
     |> Generator.run(_, seed)
     |> fst
-    |> collectCounts
-    |> Int.Map.toList
+    |> collectCounts((module Int.Ord))
     |> expect
     |> toEqual([
          (1, 9789),
@@ -110,6 +124,37 @@ describe("RandomList", () => {
          (4, 9938),
          (5, 9986),
          (6, 10047),
+       ]);
+  });
+
+  test("weighted values break down as expected", () => {
+    let seed = Seed.fromInt(-744982);
+    let weekdayGen =
+      Generator.weighted(
+        (10.0, Sun),
+        [
+          (1.0, Mon),
+          (1.0, Tue),
+          (1.0, Wed),
+          (1.0, Thu),
+          (2.0, Fri),
+          (4.0, Sat),
+        ],
+      );
+
+    RandomList.make(~length=20000, weekdayGen)
+    |> Generator.run(_, seed)
+    |> fst
+    |> collectCounts((module WeekdayOrd))
+    |> expect
+    |> toEqual([
+         (Sun, 9890),
+         (Mon, 1048),
+         (Tue, 969),
+         (Wed, 970),
+         (Thu, 964),
+         (Fri, 2007),
+         (Sat, 4152),
        ]);
   });
 });

@@ -97,6 +97,33 @@ module Generator: {
   let int: (~min: int, ~max: int) => t(int);
 
   /**
+   * Select one of the provided values at random, where each possible value is
+   * paired with a "weight". The likelihood of a given value being chosen is
+   * equal to that value's percentage of the total weight. For example, the
+   * following code produces a weekday generator that will produce Sunday half
+   * of the time, Saturday 20%, Friday 10%, and the other days 5%.
+   *
+   * ```reason
+   * type weekday =
+   *   | Sun | Mon | Tue | Wed | Thu | Fri | Sat;
+   *
+   * let weekdayGen =
+   *   weighted(
+   *     (10.0, Sun),
+   *     [
+   *       (1.0, Mon),
+   *       (1.0, Tue),
+   *       (1.0, Wed),
+   *       (1.0, Thu),
+   *       (2.0, Fri),
+   *       (4.0, Sat),
+   *     ]
+   *   );
+   * ```
+   */
+  let weighted: ((float, 'a), list((float, 'a))) => t('a);
+
+  /**
    * `map` with arguments flipped.
    */
   let flipMap: (t('a), 'a => 'b) => t('b);

@@ -14,5 +14,8 @@ npm-debug.log
 /lib/bs/
 *.bs.js
 
+# Tests
+/coverage/
+
 # Git
 *.orig
