@@ -146,6 +146,44 @@ module Generator: {
   let sample: list('a) => t(option('a));
 
   /**
+   * For types that implement [ENUM][1] (i.e. can be put into order and can be
+   * stepped through), produce a generator that samples a value between
+   * (inclusive) some min and max.
+   *
+   * For example, the "weekday" type used in the `weighted` docs could implement
+   * ENUM, where e.g. `succ(Sun) == Some(Mon)` and `pred(Sun) == None`.
+   *
+   * ```reason
+   * // a generator that has a 20% chance of producing Mon, a 20% chance of Tue,
+   * // etc, up to and including Fri (but will not produce Sat or Sun)
+   * let workdayGen = fromEnum((module WeekdayEnum), ~min=Mon, ~max=Fri);
+   * let randomWorkday = workdayGen |> run(_, mySeed); // e.g. Thu
+   * ```
+   *
+   * [1] https://github.com/reazen/relude/blob/v0.48.0/src/Relude_Interface.re#L130-L139
+   */
+  let fromEnum:
+    ((module Relude.Interface.ENUM with type t = 'a), ~min: 'a, ~max: 'a) =>
+    t('a);
+
+  /**
+   * For types that implement [BOUNDED_ENUM][1] (i.e. everything from ENUM, plus
+   * known upper and lower bounds), produce a generator that will sample a value
+   * at random of all possible values in the enum.
+   *
+   * ```reason
+   * // a generator that well produce any of the 7 weekdays (Sun...Sat) with
+   * // equal probability
+   * let weekdayGen = fromBoundedEnum((module WeekdayBoundedEnum));
+   * let randomWeekday = weekdayGen |> run(_, mySeed); // e.g. Sat
+   * ```
+   *
+   * [1] https://github.com/reazen/relude/blob/v0.48.0/src/Relude_Interface.re#L140-L150
+   */
+  let fromBoundedEnum:
+    (module Relude.Interface.BOUNDED_ENUM with type t = 'a) => t('a);
+
+  /**
    * `map` with arguments flipped.
    */
   let flipMap: (t('a), 'a => 'b) => t('b);

@@ -109,6 +109,42 @@ let sample =
   | [] => pure(None)
   | [x, ...xs] => uniform(x, xs) |> map(v => Some(v));
 
+let fromEnum =
+    (
+      type a,
+      enum: (module Relude.Interface.ENUM with type t = a),
+      ~min: a,
+      ~max: a,
+    ) => {
+  module Enum = (val enum);
+
+  // make sure "min" is lte "max"
+  let (lo, hi) =
+    switch (Enum.compare(min, max)) {
+    | `greater_than => (max, min)
+    | `less_than
+    | `equal_to => (min, max)
+    };
+
+  // work from hi -> lo through the enum, stopping at the bottom or `lo`
+  let rec go = acc =>
+    fun
+    | Some(v) when !Enum.eq(v, lo) => go([v, ...acc], Enum.pred(v))
+    | _ => acc;
+
+  uniform(lo, go([], Some(hi)));
+};
+
+let fromBoundedEnum =
+    (type a, enum: (module Relude.Interface.BOUNDED_ENUM with type t = a)) => {
+  module BoundedEnum = (val enum);
+  fromEnum(
+    (module BoundedEnum),
+    ~min=BoundedEnum.bottom,
+    ~max=BoundedEnum.top,
+  );
+};
+
 module Functor = {
   type nonrec t('a) = t('a);
   let map = map;
