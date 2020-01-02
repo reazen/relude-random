@@ -99,6 +99,16 @@ let weighted = (first, rest) => {
   float(~min=0.0, ~max=total) |> map(getByWeight(first, rest));
 };
 
+let uniform = (first, rest) => {
+  let pairWithOne = v => (1.0, v);
+  weighted(pairWithOne(first), List.map(pairWithOne, rest));
+};
+
+let sample =
+  fun
+  | [] => pure(None)
+  | [x, ...xs] => uniform(x, xs) |> map(v => Some(v));
+
 module Functor = {
   type nonrec t('a) = t('a);
   let map = map;

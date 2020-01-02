@@ -124,6 +124,28 @@ module Generator: {
   let weighted: ((float, 'a), list((float, 'a))) => t('a);
 
   /**
+   * Create a generator that choose from several possible values, with each
+   * equally likely to be chosen. At least one value is required so we don't
+   * have to worry about what happens when the list is empty.
+   *
+   * ```reason
+   * uniform(Mon, [Tues, Wed]); // ~33% chance of each being chosen
+   * uniform(Fri, []); // always produces Fri
+   * ```
+   */
+  let uniform: ('a, list('a)) => t('a);
+
+  /**
+   * Create a generator that will choose one value from a list at random. The
+   * generator will produce `None` if the list is empty; otherwise it will
+   * always produce a `Some(...)`;
+   *
+   * If you know your list has at least one value, you can use `uniform` instead
+   * to avoid having to deal with `option`.
+   */
+  let sample: list('a) => t(option('a));
+
+  /**
    * `map` with arguments flipped.
    */
   let flipMap: (t('a), 'a => 'b) => t('b);
