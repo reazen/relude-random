@@ -136,6 +136,18 @@ module Generator: {
   let uniform: ('a, list('a)) => t('a);
 
   /**
+   * Given two possible values of the same type, choose one at random, with
+   * equal probability.
+   *
+   * ```reason
+   * type coin = Heads | Tails;
+   *
+   * let flip = choose(Heads, Tails) |> run(_, mySeed); // 50% Heads, 50% Tails
+   * ```
+   */
+  let choose: ('a, 'a) => t('a);
+
+  /**
    * Create a generator that will choose one value from a list at random. The
    * generator will produce `None` if the list is empty; otherwise it will
    * always produce a `Some(...)`;
@@ -325,6 +337,27 @@ module RandomInt: {
   let fromZeroTo: int => Generator.t(int);
 };
 
+module RandomBool: {
+  /**
+   * A boolean generator that has an equal chance of choosing true and false.
+   */
+  let generator: Generator.t(bool);
+
+  /**
+   * Given an int value `n`, creates a boolean generator that will result in
+   * `true` 1/n times.
+   *
+   * Note: it doesn't make much sense to provide a negative value, so we use the
+   * absolute value. If you provide zero, we effectively choose between 0 and 1,
+   * leading to a 50% chance of being true.
+   *
+   * ```reason
+   * let oneInFour = oneIn(4) |> Generator.run(_, mySeed); // ~25% true
+   * ```
+   */
+  let oneIn: int => Generator.t(bool);
+};
+
 module RandomList: {
   /**
    * Given a generator of some type, produce a generator for a list of values of
@@ -343,7 +376,7 @@ module RandomList: {
    * random length between the provided min and max. If the minLength is less
    * than 0, it will be clamped to 0 before choosing the length
    */
-  let makeRandomLength:
+  let randomLength:
     (~minLength: int, ~maxLength: int, Generator.t('a)) =>
     Generator.t(list('a));
 };

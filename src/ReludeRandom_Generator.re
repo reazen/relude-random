@@ -104,6 +104,8 @@ let uniform = (first, rest) => {
   weighted(pairWithOne(first), List.map(pairWithOne, rest));
 };
 
+let choose = (a, b) => uniform(a, [b]);
+
 let sample =
   fun
   | [] => pure(None)

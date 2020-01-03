@@ -55,7 +55,7 @@ describe("RandomList", () => {
   );
 
   test("list with variable size", () =>
-    RandomList.makeRandomLength(
+    RandomList.randomLength(
       ~minLength=3,
       ~maxLength=19,
       Generator.float(~min=0.0, ~max=1.0),
@@ -68,7 +68,7 @@ describe("RandomList", () => {
   );
 
   test("list with negative size", () =>
-    RandomList.makeRandomLength(
+    RandomList.randomLength(
       ~minLength=-20,
       ~maxLength=-10,
       Generator.int(~min=0, ~max=2),

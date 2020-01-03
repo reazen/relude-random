@@ -14,6 +14,6 @@ let rec listHelp:
 let make = (~length: int, Generator.Generator(gen)) =>
   Generator.Generator(seed => listHelp([], length, gen, seed));
 
-let makeRandomLength = (~minLength: int, ~maxLength: int, gen) =>
+let randomLength = (~minLength: int, ~maxLength: int, gen) =>
   Generator.int(~min=minLength < 0 ? 0 : minLength, ~max=maxLength)
   |> Generator.flatMap(length => make(~length, gen));
