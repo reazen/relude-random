@@ -262,7 +262,7 @@ module Generator: {
    * ```reason
    * let (>=>) = Generator.composeKleisli;
    * let charList = length =>
-   *   RandomList.make(~length, RandomChar.latinLowercase);
+   *   RandomList.make(~length, RandomString.latinLowerCaseChar);
    *
    * // `stringOfRandomLength` is a function that takes a max length and returns
    * // a generator for random strings with a length between 0 and that max
@@ -282,9 +282,16 @@ module Generator: {
   let flipComposeKleisli: ('b => t('c), 'a => t('b), 'a) => t('c);
 
   /**
-   * Turn a generator of a generator into a single layer of generator. This is
-   * probably not often needed, since you're more likely to flatMap and never
-   * end up with the nested generators in the first place.
+   * Turn a generator of a generator into a single layer of generator. For
+   * example, imagine you want to `choose` between two generators, which will
+   * lead to a `t(t('a))`.
+   *
+   * ```reason
+   * let neverZero: t(int) =
+   *   choose(RandomInt.anyPositive, RandomInt.anyNegative)
+   *   |> flatten
+   *   |> run(_, mySeed); // a random int that is definitely not 0
+   * ```
    */
   let flatten: t(t('a)) => t('a);
 };
@@ -356,6 +363,118 @@ module RandomBool: {
    * ```
    */
   let oneIn: int => Generator.t(bool);
+};
+
+module RandomString: {
+  /**
+   * Generate a single-character string given min and max character code ints.
+   * This is probably more open-ended than you want for most use-cases. Instead,
+   * see other generators included here, such as `lowerCaseLatinChar`, etc.
+   */
+  let char: (~minCode: int, ~maxCode: int) => Generator.t(string);
+
+  /**
+   * Generate a single-character string in the range of uppercase latin letters.
+   */
+  let upperCaseLatinChar: Generator.t(string);
+
+  /**
+   * Generate a single-character string in the range of lowercase latin letters.
+   */
+  let lowerCaseLatinChar: Generator.t(string);
+
+  /**
+   * Generate any latin character (uppercase or lowercase).
+   */
+  let latinChar: Generator.t(string);
+
+  /**
+   * Generate any english character (uppercase or lowercase). This is an alias
+   * for `latinChar`.
+   */
+  let englishChar: Generator.t(string);
+
+  /**
+   * Generate any "basic latin" ascii character (in the range 0...127). Note
+   * that this generator can produce control characters such as line feeds and
+   * deletion characters.
+   */
+  let asciiChar: Generator.t(string);
+
+  /**
+   * Alias for `asciiChar`, generator for a random character in the "basic
+   * latin" block of unicode characters.
+   */
+  let basicLatinChar: Generator.t(string);
+
+  /**
+   * Generator for characters in the "Latin-1 Supplement" block of unicode.
+   */
+  let latin1SupplementChar: Generator.t(string);
+
+  /**
+   * Generator for characters in the "Latin Extended-A" block of unicode.
+   */
+  let latinExtendedAChar: Generator.t(string);
+
+  /**
+   * Generator for characters in the "Latin Extended-B" block of unicode.
+   */
+  let latinExtendedBChar: Generator.t(string);
+
+  /**
+   * Generator for fixed-length strings using the provided character generator.
+   *
+   * ```reason
+   * RandomString.make(~length=5, latinChar)
+   * |> Generator.run(_, mySeed); // e.g. "rZmuC"
+   * ```
+   */
+  let make: (~length: int, Generator.t(string)) => Generator.t(string);
+
+  /**
+   * Generator for fixed-length strings using any basic latin character.
+   */
+  let makeLatin: (~length: int) => Generator.t(string);
+
+  /**
+   * Generator for fixed-length strings using any lowercase latin character.
+   */
+  let makeLowerCaseLatin: (~length: int) => Generator.t(string);
+
+  /**
+   * Generator for fixed-length strings using any uppercase latin character.
+   */
+  let makeUpperCaseLatin: (~length: int) => Generator.t(string);
+
+  /**
+   * Generator for random length (within the provided min/max range) strings
+   * using the provided character generator.
+   */
+  let randomLength:
+    (~minLength: int, ~maxLength: int, Generator.t(string)) =>
+    Generator.t(string);
+
+  /**
+   * Generator for random length (within the provided min/max range) strings
+   * using basic latin characters.
+   */
+  let randomLengthLatin:
+    (~minLength: int, ~maxLength: int) => Generator.t(string);
+
+  /**
+   * Generator for random length (within the provided min/max range) strings
+   * using lowercase latin characters.
+   */
+  let randomLengthLowerCaseLatin:
+    (~minLength: int, ~maxLength: int) => Generator.t(string);
+
+  /**
+   * Generator for random length (within the provided min/max range) strings
+   * using uppercase latin characters.
+   */
+  let randomLengthUpperCaseLatin:
+    (~minLength: int, ~maxLength: int) => Generator.t(string);
 };
 
 module RandomList: {
