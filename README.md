@@ -1,6 +1,11 @@
 # Relude Random
 
-Generate pseudo-random values in ReasonML (in a way that is reproducible and free from side effects). This library implements [this paper](http://www.pcg-random.org/paper.html), and is largely a port of [elm/random](https://package.elm-lang.org/packages/elm/random/latest/).
+[![GitHub CI](https://img.shields.io/github/workflow/status/reazen/relude-random/CI/master)](https://github.com/reazen/relude-random/actions)
+[![test coverage](https://img.shields.io/coveralls/github/reazen/relude-random.svg)](https://coveralls.io/github/reazen/relude-random)
+[![npm version](https://img.shields.io/npm/v/relude-random.svg)](https://www.npmjs.com/package/relude-random)
+[![license](https://img.shields.io/github/license/reazen/relude-random.svg)](https://github.com/reazen/relude-random/blob/master/LICENSE)
+
+Generate pseudo-random values in ReasonML (in a way that is reproducible and free from side effects). This library implements [PCG random generators](http://www.pcg-random.org/paper.html) and is largely a port of [elm/random](https://package.elm-lang.org/packages/elm/random/latest/) (with [a few differences](https://github.com/reazen/relude-random#differences-from-elm-random))
 
 ## Installation
 
@@ -60,16 +65,84 @@ While producing the same sequence of values can be useful for testing, if you're
 
 The need to produce a different seed each run is common enough that we provide `Seed.init` which has type `Relude.IO.t(Seed.t, Void.t)`. An IO represents a lazy side effect (sort of like a Promise that isn't running yet), which will resolve to a `Seed.t`. IO has an error channel, but since this effect cannot fail, the error type is `Void.t`, which is a type that can't be constructed.
 
+## Example
+
+Let's build a generator for local dates (basically a 3-tuple of year, month, day) using the type defined in [Relude Eon](https://github.com/reazen/relude-eon). We'll limit our output to any valid date in the 1900s.
+
+```reason
+open ReludeEon;
+open ReludeRandom;
+
+let yearGen =
+  RandomInt.make(~min=1900, ~max=1999) |> Generator.map(Year.fromInt);
+
+// We could also use `Generator.fromBoundedEnum` here to save ourselves from
+// having to type out all the months, but for a small example this is clearer.
+let monthGen =
+  Generator.uniform(
+    Month.Jan,
+    [Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec]
+  );
+
+// We can combine the year and month generators using `map2` because they don't
+// depend on each other. Creating a new generator for a tuple like this can also
+// be done using `Generator.tuple2`.
+let yearMonthGen =
+  Generator.map2((year, month) => (year, month), yearGen, monthGen);
+
+// Choosing a random day-of-month _does_ depend on the output of the previous
+// year-month generator, so we use flatMap
+let localDateGen =
+  yearMonthGen
+  |> Generator.flatMap(((year, month)) => {
+       let yearInt = Year.getYear(year);
+       let isLeapYear = Year.isLeapYear(year);
+       let max = Month.totalDays(isLeapYear, month);
+
+       RandomInt.make(~min=1, ~max)
+       |> Generator.map(day => LocalDate.makeClamped(yearInt, month, day));
+  });
+
+// Run the generator with a fixed seed, producing a date like (1961, Jun, 30)
+let (date, _nextSeed) = Generator.run(localDateGen, Seed.fromInt(-761313));
+
+// More likely, you'd want to use an unknown seed, which gets you into the world
+// of IO for tracking side effects. If you're using a React hook to manage your
+// application state, [relude-reason-react][1] has helpers for working with IO.
+//
+// [1] https://github.com/reazen/relude-reason-react
+Seed.init
+|> IO.map(Generator.run(localDateGen))
+|> IO.map(((date, nextSeed)) => feedIntoReducer(date, nextSeed))
+|> IO.unsafeRunAsync(/*...*/);
+```
+
 ## Differences from Elm Random
 
 While the implementation of the algorithm is basically a direct port from Elm, there are a few key differences in usage:
 
-- Integers in Elm match the range of JS numbers (2^53), while Bucklescript ensures ints are 32-bit. This difference means that the bit-shifting that forms the foundation of this library won't produce identical values to the Elm version, even when run with the same seed.
-- Elm has a couple different ways to get a value from a generator. One is more tightly integrated with the Elm Architecture (producing a `Cmd msg`), which doesn't make as much sense in our context. Instead we only have the equivalent of Elm's `step` function, which we've named `Generator.run`.
-- The official Elm library provides most of the core pieces, while useful "extra" functions live in [a separate elm-community project](https://package.elm-lang.org/packages/elm-community/random-extra/latest). We're in the process of adding many of those directly to Relude Random.
-- Types and functions were renamed for consistency with the Relude ecosystem
-  - Generator and Seed types live in their own modules (as Generator.t and Seed.t)
-  - `Random.initialSeed` is `Seed.fromInt`
-  - `Random.constant` is `Generator.pure`
-  - `Random.andThen` is `Generator.flatMap`
-  - `Random.step` is `Generator.run`
+**Different Random Values**
+
+The algorithm is based on bit-shifting, and because ints in Elm match the range of JS numbers (`2^53`), while Bucklescript uses 32-bit ints, the overflow happens at different values, leading to different results.
+
+While random values are still evenly distributed and hard to predict, this difference means that code ported from Elm will generate different values with Relude Random, even when the same initial seed is used.
+
+**Generating Values**
+
+Elm has a couple different ways to get a value from a generator. One is more tightly integrated with the Elm Architecture (producing a `Cmd msg`), which doesn't make as much sense in our context. Instead we only have the equivalent of Elm's `step` function, which we've named `Generator.run`.
+
+**Inclusion of More Helpers**
+
+The official Elm library provides most of the core pieces, but useful "extra" functions live in [a separate elm-community project](https://package.elm-lang.org/packages/elm-community/random-extra/latest). We're in the process of adding many of those directly to Relude Random.
+
+**Naming**
+
+Types and functions were renamed for consistency with the Relude ecosystem:
+
+- Generator and Seed types live in their own modules (as Generator.t and Seed.t)
+- `Random.initialSeed` is `Seed.fromInt`
+- `Random.constant` is `Generator.pure`
+- `Random.andThen` is `Generator.flatMap`
+- `Random.step` is `Generator.run`
+
+Additionally, Elm's `random-extra` library has `Char` generators, but the `char` type in Reason is much more limited, so we use `string` even for single characters.

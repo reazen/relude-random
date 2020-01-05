@@ -1,16 +1,5 @@
 open Relude.Globals;
 
-// Bitwise operations are already globally available via OCaml's Pervasives, but
-// I find it challenging to keep track of infix `lsl`, so I'm aliasing them
-// here, which also makes it slightly easier to translate from Elm's named
-// Bitwise operations.
-module Bitwise = {
-  // let and_ = (a, b) => a land b;
-  // let or_ = (a, b) => a lor b;
-  // let xor = (a, b) => a lxor b;
-  let shiftRightZeroFill = (a, b) => b lsr a;
-};
-
 type t =
   | Seed(int, int);
 
@@ -19,10 +8,10 @@ let next = (Seed(state0, inc)) => Seed((state0 * 1664525 + inc) lsr 0, inc);
 
 // produce a pseudorandom int from a seed
 let peel = (Seed(state, _)) => {
-  let vshift = Bitwise.shiftRightZeroFill(state lsr 28 + 4, state);
+  let vshift = state lsr (state lsr 28 + 4);
   let word = state lxor vshift * 277803737;
-  let shift22 = Bitwise.shiftRightZeroFill(22, word);
-  Bitwise.shiftRightZeroFill(0, shift22 lxor word);
+  let shift22 = word lsr 22;
+  (shift22 lxor word) lsr 0;
 };
 
 let fromInt = x => {
