@@ -51,6 +51,27 @@ describe("Generator", () => {
        );
   });
 
+  TestUtil.testAllRandomSeed(
+    "sample (is some for non-empty list)",
+    Relude.Option.isSome,
+    RandomList.randomLength(~minLength=1, ~maxLength=20, RandomInt.any)
+    |> Generator.flatMap(Generator.sample),
+  );
+
+  test("sample (empty list is none", () =>
+    Generator.sample([])
+    |> Generator.run(_, Seed.fromInt(3))
+    |> fst
+    |> expect
+    |> toEqual(None)
+  );
+
+  TestUtil.testAllRandomSeed(
+    "pure (always returns same value)",
+    v => v == "xxzz",
+    Generator.pure("xxzz"),
+  );
+
   test("fromEnum", () =>
     TestUtil.testDistribution(
       (module TestUtil.Weekday),
