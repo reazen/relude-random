@@ -25,14 +25,14 @@ module Seed: {
 module Generator: {
   type t('a);
 
-  module Functor: BsAbstract.Interface.FUNCTOR with type t('a) = t('a);
+  module Functor: BsBastet.Interface.FUNCTOR with type t('a) = t('a);
 
-  module Apply: BsAbstract.Interface.APPLY with type t('a) = t('a);
+  module Apply: BsBastet.Interface.APPLY with type t('a) = t('a);
 
   module Applicative:
-    BsAbstract.Interface.APPLICATIVE with type t('a) = t('a);
+    BsBastet.Interface.APPLICATIVE with type t('a) = t('a);
 
-  module Monad: BsAbstract.Interface.MONAD with type t('a) = t('a);
+  module Monad: BsBastet.Interface.MONAD with type t('a) = t('a);
   /**
    * Run a generator with the provided seed, getting back a tuple of the random
    * value and the next seed.

@@ -45,7 +45,7 @@ module Weekday = {
 };
 
 let collectCounts =
-    (type a, ord: (module BsAbstract.Interface.ORD with type t = a), xs) => {
+    (type a, ord: (module BsBastet.Interface.ORD with type t = a), xs) => {
   module Ord = (val ord);
   module M = Map.WithOrd(Ord);
   List.foldLeft(
@@ -59,7 +59,7 @@ let collectCounts =
 let testDistribution =
     (
       type a,
-      ord: (module BsAbstract.Interface.ORD with type t = a),
+      ord: (module BsBastet.Interface.ORD with type t = a),
       ~samples=10000,
       gen: Generator.t(a),
       seed,
